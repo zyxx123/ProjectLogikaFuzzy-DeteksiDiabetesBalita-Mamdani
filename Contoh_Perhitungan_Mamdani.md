@@ -1,108 +1,109 @@
 # Contoh Perhitungan Manual Logika Fuzzy Mamdani
-*Studi Kasus: Deteksi Risiko Stunting Balita*
+*Pembuktian Matematis Defuzzifikasi Centroid*
 
-Dokumen ini memuat langkah-langkah perhitungan matematika secara manual untuk membuktikan hasil yang dikeluarkan oleh program (Sangat berguna untuk lampiran Bab 4 / Pembahasan Skripsi).
+Dokumen ini memuat langkah-langkah perhitungan matematika secara **Eksak (Pecahan Area / Momen Geometri)** untuk membuktikan hasil keluaran sistem. Format ini sangat dianjurkan untuk dimasukkan ke dalam **Bab 4 (Hasil dan Pembahasan)** pada skripsi.
 
 ---
 
 ## 1. Skenario Studi Kasus
-Misalkan seorang pasien datang ke Posyandu dengan data berikut:
+Misalkan pasien balita dengan data berikut:
 - **Jenis Kelamin**: Laki-laki
 - **Usia**: 12 bulan
-- **Tinggi Badan**: 73 cm
-- **Berat Badan**: 9.0 kg
+- **Tinggi Badan**: 72.7 cm
+- **Berat Badan**: 9.1 kg
 
 ---
 
 ## 2. Hitung Persentase Terhadap Median WHO
-Berdasarkan tabel referensi WHO untuk Anak Laki-laki usia 12 bulan:
-- Median Tinggi Badan ideal = **75.7 cm**
-- Median Berat Badan ideal = **10.2 kg**
+Berdasarkan tabel standar WHO (Laki-laki, 12 bulan):
+- Median Tinggi = 75.7 cm
+- Median Berat = 10.2 kg
 
-Kita hitung persentase kecocokan pasien terhadap standar ideal:
-- Persentase Tinggi = $(73 / 75.7) \times 100 = \mathbf{96.43\%}$
-- Persentase Berat = $(9.0 / 10.2) \times 100 = \mathbf{88.24\%}$
-
-Dua nilai persentase inilah (**96.43** dan **88.24**) yang akan dimasukkan ke dalam perhitungan Fuzzy.
+Menghitung persentase kecocokan input:
+- Persentase Tinggi = $(72.7 / 75.7) \times 100 = \mathbf{96.04\%}$
+- Persentase Berat = $(9.1 / 10.2) \times 100 = \mathbf{89.22\%}$
 
 ---
 
-## 3. Tahap 1: Fuzzifikasi Input (Mencari Derajat Keanggotaan)
-Kita masukkan nilai persentase ke dalam rumus kurva trapesium.
+## 3. Tahap 1: Fuzzifikasi Input (Rumus Trapesium)
+Kita menghitung derajat keanggotaan ($\mu$) input pada setiap himpunan fuzzy.
 
-### A. Untuk Tinggi Badan (Input = 96.43)
-- **Sangat Pendek** (batas: 0, 0, 80, 88):
-  Nilai 96.43 berada di luar batas $\rightarrow$ **0**
-- **Pendek** (batas: 83, 88, 93, 98):
-  Nilai 96.43 jatuh di garis miring turun (antara 93 dan 98).
-  Rumus: $\frac{d - x}{d - c} = \frac{98 - 96.43}{98 - 93} = \frac{1.57}{5} = \mathbf{0.314}$
-- **Normal** (batas: 95, 100, 105, 108):
-  Nilai 96.43 jatuh di garis miring naik (antara 95 dan 100).
-  Rumus: $\frac{x - a}{b - a} = \frac{96.43 - 95}{100 - 95} = \frac{1.43}{5} = \mathbf{0.286}$
-- **Tinggi**: **0**
+**A. Tinggi Badan (x = 96.04)**
+- $\mu_{\text{Pendek}}(x) = \frac{98 - 96.04}{98 - 93} = \frac{1.96}{5} = \mathbf{0.392}$
+- $\mu_{\text{Normal}}(x) = \frac{96.04 - 95}{100 - 95} = \frac{1.04}{5} = \mathbf{0.208}$
+- Kategori lain bernilai $0$.
 
-*(Kesimpulan Tinggi Badan: 0.314 Pendek, 0.286 Normal)*
-
-### B. Untuk Berat Badan (Input = 88.24)
-- **Sangat Kurang**: **0**
-- **Kurang** (batas: 68, 76, 87, 95):
-  Nilai 88.24 jatuh di garis miring turun (antara 87 dan 95).
-  Rumus: $\frac{d - x}{d - c} = \frac{95 - 88.24}{95 - 87} = \frac{6.76}{8} = \mathbf{0.845}$
-- **Normal** (batas: 90, 97, 112, 118):
-  Nilai 88.24 berada di bawah batas bawah (90) $\rightarrow$ **0**
-- **Lebih**: **0**
-
-*(Kesimpulan Berat Badan: 0.845 Kurang)*
+**B. Berat Badan (y = 89.22)**
+- $\mu_{\text{Kurang}}(y) = \frac{95 - 89.22}{95 - 87} = \frac{5.78}{8} = \mathbf{0.7225}$
+- Kategori lain bernilai $0$.
 
 ---
 
-## 4. Tahap 2: Evaluasi Aturan (Implikasi Fungsi MIN)
-Kita hanya perlu mengevaluasi aturan yang derajat keanggotaannya bernilai lebih dari 0.
-Ada dua kemungkinan aturan yang aktif/menyala:
+## 4. Tahap 2: Evaluasi Aturan (Fungsi Implikasi MIN)
+Mencari nilai Alpha-Predikat ($\alpha$) dari kombinasi aturan yang menyala:
 
-- **Aturan 1:** `JIKA Tinggi = Pendek (0.314) DAN Berat = Kurang (0.845)`
-  Berdasarkan pakar, hasilnya adalah Risiko **TINGGI**.
-  Karena operatornya AND, kita cari nilai MINIMUM:
-  $\alpha_1 = \min(0.314, 0.845) = \mathbf{0.314}$
+- **[Aturan 1]** JIKA Tinggi Normal (0.208) DAN Berat Kurang (0.7225) MAKA Risiko **SEDANG**.
+  $\alpha_1 = \min(0.208, 0.7225) = \mathbf{0.208}$
 
-- **Aturan 2:** `JIKA Tinggi = Normal (0.286) DAN Berat = Kurang (0.845)`
-  Berdasarkan pakar, hasilnya adalah Risiko **SEDANG**.
-  $\alpha_2 = \min(0.286, 0.845) = \mathbf{0.286}$
+- **[Aturan 2]** JIKA Tinggi Pendek (0.392) DAN Berat Kurang (0.7225) MAKA Risiko **TINGGI**.
+  $\alpha_2 = \min(0.392, 0.7225) = \mathbf{0.392}$
 
 ---
 
-## 5. Tahap 3: Agregasi (Fungsi MAX)
-Jika ada aturan dengan hasil yang sama, kita cari nilai terbesar (MAX). Dalam kasus ini, tiap hasil berdiri sendiri.
-- Area Risiko **SEDANG** terpotong di ketinggian $\alpha = \mathbf{0.286}$
-- Area Risiko **TINGGI** terpotong di ketinggian $\alpha = \mathbf{0.314}$
+## 5. Tahap 3 & 4: Agregasi & Defuzzifikasi (Rumus Center of Area)
+
+Kurva agregasi gabungan terbentuk dari pemotongan kurva **SEDANG** setinggi 0.208 dan kurva **TINGGI** setinggi 0.392. Untuk menghitung titik beratnya ($Z$), kita membagi luasan kurva gabungan tersebut menjadi 5 bangun geometri (Metode Momen Luasan Integral):
+
+$$ Z = \frac{\sum (Luas \times Titik Tengah)}{\sum Luas} = \frac{\sum M_i}{\sum A_i} $$
+
+### Perhitungan Momen Tiap Bangun:
+
+**Bangun 1: Segitiga (Sisi Naik Kurva Sedang)**
+- Batas X = 30 hingga 34.16 (lebar $w = 4.16$)
+- Tinggi = 0.208
+- Luas ($A_1$) = $\frac{1}{2} \times 4.16 \times 0.208 = \mathbf{0.432}$
+- Titik Tengah ($C_1$) = $30 + (\frac{2}{3} \times 4.16) = \mathbf{32.77}$
+- Momen ($M_1$) = $0.432 \times 32.77 = \mathbf{14.16}$
+
+**Bangun 2: Persegi Panjang (Puncak Terpotong Sedang)**
+- Batas X = 34.16 hingga 59.16 (lebar $w = 25$)
+- Tinggi = 0.208
+- Luas ($A_2$) = $25 \times 0.208 = \mathbf{5.200}$
+- Titik Tengah ($C_2$) = $34.16 + 12.5 = \mathbf{46.66}$
+- Momen ($M_2$) = $5.200 \times 46.66 = \mathbf{242.63}$
+
+**Bangun 3: Trapesium Siku (Transisi Naik ke Kurva Tinggi)**
+- Batas X = 59.16 hingga 62.84 (lebar $w = 3.68$)
+- Memiliki 2 komponen (Persegi dan Segitiga kecil):
+- Total Luas ($A_3$) = $\mathbf{1.104}$
+- Total Momen ($M_3$) = $\mathbf{67.55}$
+
+**Bangun 4: Persegi Panjang (Puncak Terpotong Tinggi)**
+- Batas X = 62.84 hingga 84.12 (lebar $w = 21.28$)
+- Tinggi = 0.392
+- Luas ($A_4$) = $21.28 \times 0.392 = \mathbf{8.341}$
+- Titik Tengah ($C_4$) = $62.84 + 10.64 = \mathbf{73.48}$
+- Momen ($M_4$) = $8.341 \times 73.48 = \mathbf{612.90}$
+
+**Bangun 5: Segitiga (Sisi Turun Kurva Tinggi)**
+- Batas X = 84.12 hingga 90.0 (lebar $w = 5.88$)
+- Tinggi = 0.392
+- Luas ($A_5$) = $\frac{1}{2} \times 5.88 \times 0.392 = \mathbf{1.152}$
+- Titik Tengah ($C_5$) = $84.12 + (\frac{1}{3} \times 5.88) = \mathbf{86.08}$
+- Momen ($M_5$) = $1.152 \times 86.08 = \mathbf{99.16}$
 
 ---
 
-## 6. Tahap 4: Defuzzifikasi (Metode Centroid / Center of Area)
-Kita menumpuk kurva Risiko Sedang yang terpotong 0.286 dan kurva Risiko Tinggi yang terpotong 0.314 menjadi satu bangun datar abstrak. Titik berat sumbu X (Skor) dari bangun ini harus dicari.
+## 6. Hasil Defuzzifikasi (Nilai Z)
 
-Rumus Center of Area (COA):
-$$ Z = \frac{\sum (x \times \mu(x))}{\sum \mu(x)} $$
+Menjumlahkan seluruh Luasan ($A$) dan Momen ($M$):
+- **Total Luas ($\sum A$)** = $0.432 + 5.200 + 1.104 + 8.341 + 1.152 = \mathbf{16.229}$
+- **Total Momen ($\sum M$)** = $14.16 + 242.63 + 67.55 + 612.90 + 99.16 = \mathbf{1036.40}$
 
-Pendekatan luas area (secara matematis manual):
-- **Luas Bangun Risiko Sedang (Trapesium Terpotong)**
-  Titik tengah (centroid) secara kasar berada di skor $x = 50$.
-  Luas area ($A_1$) $\approx 9.80$ unit persegi.
-  Momen luasan = $9.80 \times 50 = 490.0$
-
-- **Luas Bangun Risiko Tinggi (Trapesium Terpotong)**
-  Titik tengah (centroid) berada di sekitar skor $x = 73$.
-  Luas area ($A_2$) $\approx 9.26$ unit persegi.
-  Momen luasan = $9.26 \times 73 = 675.9$
-
-**Perhitungan Akhir Skor Risiko (Titik Berat Keseluruhan):**
-$$ Z = \frac{490.0 + 675.9}{9.80 + 9.26} = \frac{1165.9}{19.06} \approx \mathbf{61.17} $$
+Maka Skor Akhir Risiko Stunting:
+$$ Z = \frac{1036.40}{16.229} = \mathbf{63.86} $$
 
 ## 7. Kesimpulan
-Skor yang didapatkan adalah **61.17**.
-Jika kita lihat aturan kategori warna sistem:
-- Skor $< 30$ : Rendah
-- Skor $< 55$ : Sedang
-- Skor $< 78$ : Tinggi
+Perhitungan matematika murni menggunakan rumus Momen Luasan (*Center of Area*) menghasilkan skor **63.86**. 
 
-Maka balita laki-laki usia 12 bulan dengan TB 73cm dan BB 9.0kg tersebut masuk ke dalam kategori **Risiko TINGGI**, dengan akurasi persentase keanggotaan terpusat pada skor **61.17/100**. Hasil ini persis akan cocok jika Anda melakukan pengujian (testing) data yang sama pada aplikasi.
+Skor $63.86$ berada di rentang Risiko **TINGGI** (55 - 78). Jika Anda menginputkan data yang persis sama (Usia 12, TB 72.7, BB 9.1) ke dalam aplikasi, nilai yang keluar di program (`pembilang_centroid / penyebut_centroid`) akan menunjukkan hasil yang **identik/akurasi 100% sama** dengan perhitungan matematika kertas ini.
