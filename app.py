@@ -1,231 +1,153 @@
-import streamlit as st
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import pandas as pd
 import altair as alt
+import json
 from database import *
 from fuzzy_logic import *
 
-# Konfigurasi Halaman Utama
-st.set_page_config(page_title="Fuzzy – Risiko Stunting", page_icon="🔵", layout="wide")
+app = Flask(__name__)
+app.secret_key = "kunci_rahasia_stunting_super_aman"
 
-# Memuat file CSS eksternal untuk gaya tampilan
-try:
-    with open("style.css", "r", encoding="utf-8") as file_css:
-        st.markdown(f"<style>{file_css.read()}</style>", unsafe_allow_html=True)
-except:
-    pass
+# Pastikan DB terinisialisasi saat server nyala
+with app.app_context():
+    inisialisasi_database()
 
-# Inisialisasi Database
-if 'db_terinisialisasi' not in st.session_state:
-    sukses = inisialisasi_database()
-    st.session_state.db_terinisialisasi = sukses
-    if not sukses:
-        st.error("Gagal terhubung ke database MySQL. Pastikan XAMPP/Laragon menyala.")
-
-# Session State untuk Login
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'user_data' not in st.session_state:
-    st.session_state.user_data = None
-
-# --- HALAMAN LOGIN ---
-def halaman_login():
-    st.markdown('<div class="title-badge">🔵 Sistem Pakar Stunting Terpadu</div>', unsafe_allow_html=True)
-    st.title("Login Sistem")
-    
-    with st.form("form_login"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Masuk", use_container_width=True)
-        
-        if submit:
-            user = verifikasi_login(username, password)
-            if user:
-                st.session_state.logged_in = True
-                st.session_state.user_data = user
-                st.success(f"Login berhasil sebagai {user['role']}!")
-                st.rerun()
-            else:
-                st.error("Username atau password salah!")
-
-    st.info("Akun Default Administrator: username `admin`, password `admin123`\n\nAkun Default Pengguna (Kader): username `kader`, password `kader123`")
-
-# --- KOMPONEN BANTUAN UI ---
 def gaya_tampilan_risiko(skor):
-    if skor < 30:  return "✅ Risiko RENDAH",        "#0d2e1a", "#34d399"
-    if skor < 55:  return "⚠️ Risiko SEDANG",        "#2d2000", "#fbbf24"
-    if skor < 78:  return "🔴 Risiko TINGGI",        "#2d0f0f", "#f87171"
-    return            "🚨 Risiko SANGAT TINGGI", "#2a0d1e", "#f472b6"
+    if skor < 30:  return "✅ Risiko RENDAH"
+    if skor < 55:  return "⚠️ Risiko SEDANG"
+    if skor < 78:  return "🔴 Risiko TINGGI"
+    return            "🚨 Risiko SANGAT TINGGI"
 
-def daftar_rekomendasi(skor, persentase_tinggi, persentase_berat):
-    saran = []
-    if persentase_tinggi < 90: saran.append("📍 Konsultasi ke Puskesmas/Posyandu untuk pemantauan pertumbuhan rutin.")
-    if persentase_berat < 80: saran.append("🥩 Tingkatkan asupan gizi – MPASI berkualitas (protein, zat besi, zinc).")
-    if skor >= 55: saran.append("🏥 Anak terindikasi stunting – segera rujuk ke tenaga gizi/dokter anak.")
-    if skor >= 78: saran.append("🚨 Periksakan kondisi menyeluruh & laporkan ke program gizi nasional.")
-    saran.append("💉 Tetap imunisasi sesuai jadwal dan jaga kebersihan/sanitasi.")
-    if skor < 30: saran.append("🌟 Pertumbuhan baik – pertahankan pola makan bergizi seimbang!")
-    return saran
+@app.route('/')
+def index():
+    if session.get('logged_in'):
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
 
-# --- HALAMAN MANAJEMEN PASIEN ---
-def halaman_manajemen_pasien():
-    st.header("Manajemen Data Pasien")
-    tab1, tab2 = st.tabs(["Daftar Pasien", "Tambah Pasien Baru"])
-    
-    with tab1:
-        pasien = dapatkan_semua_pasien()
-        if pasien:
-            df = pd.DataFrame(pasien)
-            st.dataframe(df, use_container_width=True)
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = verifikasi_login(username, password)
+        
+        if user:
+            session['logged_in'] = True
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            flash('Berhasil login!', 'success')
+            return redirect(url_for('dashboard'))
         else:
-            st.info("Belum ada data pasien.")
+            flash('Username atau password salah!', 'error')
             
-    with tab2:
-        with st.form("form_tambah_pasien"):
-            nama = st.text_input("Nama Anak")
-            jk = st.selectbox("Jenis Kelamin", ["Laki-laki", "Perempuan"])
-            tgl_lahir = st.date_input("Tanggal Lahir")
-            nama_ortu = st.text_input("Nama Orang Tua")
-            if st.form_submit_button("Simpan Pasien"):
-                if nama and nama_ortu:
-                    tambah_pasien(nama, jk, tgl_lahir, nama_ortu)
-                    st.success("Pasien berhasil ditambahkan!")
-                    st.rerun()
-                else:
-                    st.error("Mohon lengkapi semua data.")
+    return render_template('login.html')
 
-# --- HALAMAN DETEKSI (PENGGUNA) ---
-def halaman_deteksi():
-    st.header("Deteksi Risiko Stunting")
-    
-    pasien_list = dapatkan_semua_pasien()
-    if not pasien_list:
-        st.warning("Belum ada data pasien. Silakan tambahkan pasien terlebih dahulu di menu Manajemen Pasien.")
-        return
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Anda telah keluar dari sistem.', 'success')
+    return redirect(url_for('login'))
+
+@app.route('/dashboard')
+def dashboard():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
         
-    pilihan_pasien = st.selectbox(
-        "Pilih Pasien", 
-        options=pasien_list, 
-        format_func=lambda x: f"{x['nama_anak']} ({x['jenis_kelamin']}) - Anak dari {x['nama_orang_tua']}"
-    )
-    
-    if 'tampilkan_hasil' not in st.session_state:
-        st.session_state.tampilkan_hasil = False
-
-    if not st.session_state.tampilkan_hasil:
-        kolom_kiri, kolom_kanan = st.columns(2)
-        with kolom_kiri:
-            input_usia = st.number_input("Usia Anak (bulan)", min_value=0, max_value=60, value=12, step=1)
-            input_tinggi = st.number_input("Tinggi Badan (cm)", min_value=30.0, max_value=140.0, value=75.0, step=0.1)
-        with kolom_kanan:
-            input_berat  = st.number_input("Berat Badan (kg)", min_value=1.0, max_value=40.0, value=9.5, step=0.1)
-
-        if st.button("🔍 Analisis & Simpan Hasil", use_container_width=True, type="primary"):
-            st.session_state.input_usia = input_usia
-            st.session_state.input_tinggi = input_tinggi
-            st.session_state.input_berat = input_berat
-            st.session_state.pasien_terpilih = pilihan_pasien
-            st.session_state.tampilkan_hasil = True
-            st.rerun()
+    if session.get('role') == 'admin':
+        riwayat = dapatkan_semua_riwayat()
+        stats = {
+            'total': len(riwayat),
+            'tinggi': sum(1 for r in riwayat if 'TINGGI' in r['label_risiko']),
+            'rendah': sum(1 for r in riwayat if 'RENDAH' in r['label_risiko'])
+        }
+        return render_template('admin.html', riwayat=riwayat, stats=stats)
     else:
-        # Proses Hasil Deteksi
-        if st.button("⬅️ Kembali untuk Deteksi Ulang"):
-            st.session_state.tampilkan_hasil = False
-            st.rerun()
+        # Kader Dashboard
+        riwayat = dapatkan_semua_riwayat()
+        return render_template('kader.html', riwayat=riwayat)
 
-        pasien = st.session_state.pasien_terpilih
-        input_usia = st.session_state.input_usia
-        input_tinggi = st.session_state.input_tinggi
-        input_berat = st.session_state.input_berat
+@app.route('/tambah_pasien', methods=['POST'])
+def tambah_pasien_route():
+    if not session.get('logged_in') or session.get('role') != 'pengguna':
+        return redirect(url_for('login'))
         
-        standar_who = hitung_median_who(input_usia, pasien['jenis_kelamin'])
-        persentase_tinggi = (input_tinggi / standar_who["tinggi"]) * 100
-        persentase_berat = (input_berat / standar_who["berat"]) * 100
+    nama = request.form['nama']
+    jk = request.form['jk']
+    tgl_lahir = request.form['tgl_lahir']
+    nama_ortu = request.form['nama_ortu']
+    
+    tambah_pasien(nama, jk, tgl_lahir, nama_ortu)
+    flash(f"Pasien {nama} berhasil didaftarkan!", "success")
+    return redirect(url_for('dashboard'))
+
+@app.route('/deteksi', methods=['GET', 'POST'])
+def deteksi():
+    if not session.get('logged_in') or session.get('role') != 'pengguna':
+        return redirect(url_for('login'))
+        
+    pasien_list = dapatkan_semua_pasien()
+    
+    if request.method == 'GET':
+        return render_template('deteksi.html', pasien=pasien_list, hasil=None)
+        
+    if request.method == 'POST':
+        id_pasien = int(request.form['id_pasien'])
+        usia = int(request.form['usia'])
+        tinggi = float(request.form['tinggi'])
+        berat = float(request.form['berat'])
+        
+        # Cari detail pasien
+        data_pasien = next((p for p in pasien_list if p['id'] == id_pasien), None)
+        if not data_pasien:
+            flash("Pasien tidak ditemukan!", "error")
+            return redirect(url_for('deteksi'))
+            
+        # Hitung Fuzzy
+        standar_who = hitung_median_who(usia, data_pasien['jenis_kelamin'])
+        persentase_tinggi = (tinggi / standar_who["tinggi"]) * 100
+        persentase_berat = (berat / standar_who["berat"]) * 100
         
         derajat_tinggi = fuzzifikasi_tinggi_badan(persentase_tinggi)
         derajat_berat = fuzzifikasi_berat_badan(persentase_berat)
         
-        skor_akhir, histori_aturan, kordinat_x, kordinat_y, agregasi = proses_inferensi_mamdani(derajat_tinggi, derajat_berat)
-        label_risiko, warna_bg, warna_teks = gaya_tampilan_risiko(skor_akhir)
-
-        # SIMPAN KE DATABASE SEKALI SAJA
-        if 'sudah_disimpan' not in st.session_state:
-            bersih_label = label_risiko.split("Risiko ")[-1]
-            simpan_riwayat(pasien['id'], input_usia, input_tinggi, input_berat, skor_akhir, bersih_label, st.session_state.user_data['id'])
-            st.session_state.sudah_disimpan = True
-            st.success("Hasil berhasil disimpan ke dalam database riwayat!")
-
-        st.markdown("---")
-        st.subheader(f"📊 Hasil Analisis: {pasien['nama_anak']}")
-        st.markdown(f'<div class="result-box" style="background:{warna_bg};color:{warna_teks}">{label_risiko}</div>', unsafe_allow_html=True)
-        st.progress(int(skor_akhir), text=f"Skor Titik Berat (Centroid): {skor_akhir:.2f}/100")
+        skor_akhir, _, kordinat_x, kordinat_y, _ = proses_inferensi_mamdani(derajat_tinggi, derajat_berat)
+        label_risiko_full = gaya_tampilan_risiko(skor_akhir)
+        label_bersih = label_risiko_full.split("Risiko ")[-1]
         
-        # Grafik
+        # Simpan riwayat
+        simpan_riwayat(id_pasien, usia, tinggi, berat, skor_akhir, label_bersih, session['user_id'])
+        
+        # Buat Grafik Altair
         tabel_grafik = pd.DataFrame({'Skor Risiko': kordinat_x, 'Derajat Area': kordinat_y})
-        grafik_area = alt.Chart(tabel_grafik).mark_area(opacity=0.5, color='#2dd4bf').encode(
-            x=alt.X('Skor Risiko', scale=alt.Scale(domain=[0, 100])),
-            y=alt.Y('Derajat Area', scale=alt.Scale(domain=[0, 1]))
+        grafik_area = alt.Chart(tabel_grafik).mark_area(opacity=0.6, color='#0284c7').encode(
+            x=alt.X('Skor Risiko', scale=alt.Scale(domain=[0, 100]), title='Skor Keparahan Stunting'),
+            y=alt.Y('Derajat Area', scale=alt.Scale(domain=[0, 1]), title='Derajat Keanggotaan')
         )
         if skor_akhir > 0:
-            garis_centroid = alt.Chart(pd.DataFrame({'Skor Risiko': [skor_akhir], 'color': ['red']})).mark_rule(color='#f87171', strokeWidth=3).encode(x='Skor Risiko')
-            st.altair_chart(grafik_area + garis_centroid, use_container_width=True)
+            garis_centroid = alt.Chart(pd.DataFrame({'Skor Risiko': [skor_akhir]})).mark_rule(color='#f43f5e', strokeWidth=3).encode(x='Skor Risiko')
+            chart = grafik_area + garis_centroid
         else:
-            st.altair_chart(grafik_area, use_container_width=True)
-
-        if st.button("⬅️ Selesai"):
-            st.session_state.tampilkan_hasil = False
-            if 'sudah_disimpan' in st.session_state: del st.session_state.sudah_disimpan
-            st.rerun()
-
-# --- HALAMAN DASHBOARD (ADMIN) ---
-def halaman_dashboard():
-    st.header("Dashboard Statistik Stunting")
-    riwayat = dapatkan_semua_riwayat()
-    
-    if riwayat:
-        df = pd.DataFrame(riwayat)
-        
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Pemeriksaan", len(df))
-        col2.metric("Sangat Tinggi / Tinggi", len(df[df['label_risiko'].isin(['TINGGI', 'SANGAT TINGGI'])]))
-        col3.metric("Normal / Rendah", len(df[df['label_risiko'] == 'RENDAH']))
-        
-        st.subheader("Seluruh Riwayat Pemeriksaan")
-        # Format tabel agar rapi
-        df_show = df[['tanggal_periksa', 'nama_anak', 'usia_bulan', 'tinggi_cm', 'berat_kg', 'label_risiko', 'nama_petugas']]
-        st.dataframe(df_show, use_container_width=True)
-    else:
-        st.info("Belum ada data pemeriksaan.")
-
-# --- ROUTER UTAMA ---
-if not st.session_state.logged_in:
-    halaman_login()
-else:
-    user = st.session_state.user_data
-    
-    with st.sidebar:
-        st.markdown(f"### Halo, {user['username']}!")
-        st.caption(f"Role: {user['role'].upper()}")
-        st.divider()
-        
-        if user['role'] == 'admin':
-            menu = st.radio("Navigasi", ["Dashboard Statistik", "Manajemen Pasien"])
-        else:
-            menu = st.radio("Navigasi", ["Deteksi Risiko", "Manajemen Pasien", "Riwayat Seluruh Pasien"])
+            chart = grafik_area
             
-        st.divider()
-        if st.button("🚪 Keluar (Logout)"):
-            st.session_state.clear()
-            st.rerun()
-            
-    # Tampilkan Halaman Sesuai Menu
-    if user['role'] == 'admin':
-        if menu == "Dashboard Statistik": halaman_dashboard()
-        elif menu == "Manajemen Pasien": halaman_manajemen_pasien()
-    else:
-        if menu == "Deteksi Risiko": halaman_deteksi()
-        elif menu == "Manajemen Pasien": halaman_manajemen_pasien()
-        elif menu == "Riwayat Seluruh Pasien":
-            st.header("Riwayat Seluruh Pasien")
-            riwayat = dapatkan_semua_riwayat()
-            if riwayat: st.dataframe(pd.DataFrame(riwayat)[['tanggal_periksa', 'nama_anak', 'usia_bulan', 'tinggi_cm', 'berat_kg', 'skor_fuzzy', 'label_risiko']], use_container_width=True)
-            else: st.info("Belum ada data pemeriksaan.")
+        # Chart configuration for dark theme
+        chart = chart.properties(width='container', height=300).configure_view(strokeOpacity=0).configure_axis(
+            labelColor='#94a3b8', titleColor='#94a3b8', gridColor='#334155', domainColor='#475569'
+        )
+        
+        chart_json = chart.to_json()
+        
+        hasil_data = {
+            "pasien": data_pasien,
+            "usia": usia,
+            "tinggi": tinggi,
+            "berat": berat,
+            "skor": skor_akhir,
+            "label": label_risiko_full
+        }
+        
+        flash("Analisis selesai dan riwayat telah disimpan.", "success")
+        return render_template('deteksi.html', pasien=pasien_list, hasil=hasil_data, chart_json=chart_json)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
