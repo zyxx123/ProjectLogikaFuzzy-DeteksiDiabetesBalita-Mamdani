@@ -18,6 +18,16 @@ def gaya_tampilan_risiko(skor):
     if skor < 78:  return "🔴 Risiko TINGGI"
     return            "🚨 Risiko SANGAT TINGGI"
 
+def daftar_rekomendasi(skor, persentase_tinggi, persentase_berat):
+    saran = []
+    if persentase_tinggi < 90: saran.append("Konsultasi ke Puskesmas/Posyandu untuk pemantauan pertumbuhan tinggi anak secara rutin.")
+    if persentase_berat < 80: saran.append("Tingkatkan asupan gizi – berikan MPASI berkualitas tinggi (kaya protein hewani, zat besi, dan zinc).")
+    if skor >= 55: saran.append("Anak terindikasi kuat stunting – segera rujuk ke tenaga gizi atau dokter spesialis anak.")
+    if skor >= 78: saran.append("Kondisi SANGAT KRITIS! Periksakan kondisi menyeluruh segera dan laporkan ke program gizi nasional.")
+    if skor < 30: saran.append("Pertumbuhan sangat baik – pertahankan pola asuh dan makan bergizi seimbang!")
+    saran.append("Tetap berikan imunisasi dasar lengkap sesuai jadwal dan selalu jaga kebersihan/sanitasi lingkungan.")
+    return saran
+
 @app.route('/')
 def index():
     if session.get('logged_in'):
@@ -130,12 +140,15 @@ def deteksi():
         else:
             chart = grafik_area
             
-        # Chart configuration for dark theme
+        # Chart configuration for light theme
         chart = chart.properties(width='container', height=300).configure_view(strokeOpacity=0).configure_axis(
-            labelColor='#94a3b8', titleColor='#94a3b8', gridColor='#334155', domainColor='#475569'
+            labelColor='#475569', titleColor='#334155', gridColor='#e2e8f0', domainColor='#cbd5e1'
         )
         
         chart_json = chart.to_json()
+        
+        # Ambil rekomendasi medis
+        rekomendasi_list = daftar_rekomendasi(skor_akhir, persentase_tinggi, persentase_berat)
         
         hasil_data = {
             "pasien": data_pasien,
@@ -143,11 +156,12 @@ def deteksi():
             "tinggi": tinggi,
             "berat": berat,
             "skor": skor_akhir,
-            "label": label_risiko_full
+            "label": label_risiko_full,
+            "rekomendasi": rekomendasi_list
         }
         
         flash("Analisis selesai dan riwayat telah disimpan.", "success")
         return render_template('deteksi.html', pasien=pasien_list, hasil=hasil_data, chart_json=chart_json)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

@@ -11,13 +11,10 @@
             theme: {
                 extend: {
                     colors: {
-                        navy: {
-                            800: '#1e293b', // slate-800
-                            900: '#0f172a', // slate-900
-                        },
                         medical: {
-                            blue: '#0284c7', // light blue medical
-                            dark: '#0369a1',
+                            light: '#e0f2fe', // sky-100
+                            blue: '#0ea5e9', // sky-500
+                            dark: '#0369a1', // sky-700
                         }
                     }
                 }
@@ -28,31 +25,49 @@
     <style>
         body { font-family: 'Outfit', sans-serif; }
         .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
         }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
     </style>
     <!-- Vega-Lite Scripts for Altair Charts -->
     <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 </head>
-<body class="bg-navy-900 text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <!-- Subtle Background Elements -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-medical-light rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+        <div class="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
+    </div>
 
     <!-- Top Navigation -->
-    <nav class="glass-card sticky top-0 z-50 border-b border-slate-700">
+    <nav class="glass-card sticky top-0 z-50 border-b border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-medical-blue flex items-center justify-center font-bold text-white">FS</div>
-                    <span class="font-bold text-xl tracking-tight text-white">Fuzzy Stunting</span>
+                    <div class="w-8 h-8 rounded-full bg-medical-blue flex items-center justify-center font-bold text-white shadow-md shadow-medical-blue/30">FS</div>
+                    <span class="font-bold text-xl tracking-tight text-medical-dark">Fuzzy Stunting</span>
                 </div>
                 
                 <div class="flex items-center space-x-4">
                     {% if session.get('logged_in') %}
-                        <span class="text-sm text-slate-400">Halo, <b class="text-white">{{ session.get('username') }}</b></span>
-                        <a href="{{ url_for('logout') }}" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition">Logout</a>
+                        <span class="text-sm text-slate-500">Halo, <b class="text-slate-800">{{ session.get('username') }}</b></span>
+                        <a href="{{ url_for('logout') }}" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-red-100 text-red-600 hover:bg-red-200 transition">Logout</a>
                     {% endif %}
                 </div>
             </div>
@@ -64,8 +79,8 @@
       {% if messages %}
         <div class="max-w-4xl mx-auto w-full mt-4 px-4">
         {% for category, message in messages %}
-          {% set bg_color = 'bg-green-500/20 border-green-500/50 text-green-300' if category == 'success' else 'bg-red-500/20 border-red-500/50 text-red-300' %}
-          <div class="p-4 mb-2 rounded-lg border {{ bg_color }}">
+          {% set bg_color = 'bg-emerald-100 border-emerald-200 text-emerald-800' if category == 'success' else 'bg-red-100 border-red-200 text-red-800' %}
+          <div class="p-4 mb-2 rounded-xl border {{ bg_color }} shadow-sm font-medium">
             {{ message }}
           </div>
         {% endfor %}
@@ -79,8 +94,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="glass-card py-6 mt-auto">
-        <div class="text-center text-sm text-slate-500">
+    <footer class="py-6 mt-auto">
+        <div class="text-center text-sm text-slate-400">
             &copy; 2026 Sistem Deteksi Dini Stunting Balita - Logika Fuzzy Mamdani Murni
         </div>
     </footer>

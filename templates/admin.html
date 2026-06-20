@@ -1,68 +1,68 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in-up">
     <div class="flex justify-between items-end">
         <div>
-            <h1 class="text-3xl font-bold text-white">Dashboard Statistik</h1>
-            <p class="text-slate-400 mt-1">Pemantauan Risiko Stunting Keseluruhan Wilayah</p>
+            <h1 class="text-3xl font-bold text-slate-800">Dashboard Statistik</h1>
+            <p class="text-slate-500 mt-1 font-medium">Pemantauan Risiko Stunting Keseluruhan Wilayah</p>
         </div>
     </div>
 
     <!-- Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-medical-blue">
-            <h3 class="text-slate-400 font-medium mb-1">Total Pemeriksaan</h3>
-            <p class="text-4xl font-bold text-white">{{ stats.total }}</p>
+        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-medical-blue hover:shadow-lg transition transform hover:-translate-y-1">
+            <h3 class="text-slate-500 font-semibold mb-1">Total Pemeriksaan</h3>
+            <p class="text-4xl font-black text-slate-800">{{ stats.total }}</p>
         </div>
-        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-red-500">
-            <h3 class="text-slate-400 font-medium mb-1">Berisiko Tinggi/Sangat Tinggi</h3>
-            <p class="text-4xl font-bold text-red-400">{{ stats.tinggi }}</p>
+        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-rose-500 hover:shadow-lg transition transform hover:-translate-y-1">
+            <h3 class="text-slate-500 font-semibold mb-1">Berisiko Tinggi/Sangat Tinggi</h3>
+            <p class="text-4xl font-black text-rose-600">{{ stats.tinggi }}</p>
         </div>
-        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-emerald-500">
-            <h3 class="text-slate-400 font-medium mb-1">Berisiko Normal/Rendah</h3>
-            <p class="text-4xl font-bold text-emerald-400">{{ stats.rendah }}</p>
+        <div class="glass-card p-6 rounded-2xl border-l-4 border-l-emerald-500 hover:shadow-lg transition transform hover:-translate-y-1">
+            <h3 class="text-slate-500 font-semibold mb-1">Berisiko Normal/Rendah</h3>
+            <p class="text-4xl font-black text-emerald-600">{{ stats.rendah }}</p>
         </div>
     </div>
 
     <!-- Table -->
-    <div class="glass-card rounded-2xl overflow-hidden mt-8">
-        <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/50">
-            <h3 class="text-lg font-semibold text-white">Riwayat Seluruh Pemeriksaan</h3>
+    <div class="glass-card rounded-2xl overflow-hidden mt-8 shadow-sm">
+        <div class="px-6 py-5 border-b border-slate-200 bg-white/50">
+            <h3 class="text-lg font-bold text-slate-800">Riwayat Seluruh Pemeriksaan</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto bg-white/40">
             <table class="w-full text-left text-sm">
-                <thead class="bg-slate-800/80 text-slate-400">
+                <thead class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
                     <tr>
-                        <th class="px-6 py-4 font-medium">Tanggal</th>
-                        <th class="px-6 py-4 font-medium">Nama Anak</th>
-                        <th class="px-6 py-4 font-medium">Usia (Bln)</th>
-                        <th class="px-6 py-4 font-medium">Pengukuran</th>
-                        <th class="px-6 py-4 font-medium">Status Risiko</th>
-                        <th class="px-6 py-4 font-medium">Kader / Petugas</th>
+                        <th class="px-6 py-4">Tanggal</th>
+                        <th class="px-6 py-4">Nama Anak</th>
+                        <th class="px-6 py-4">Usia (Bln)</th>
+                        <th class="px-6 py-4">Pengukuran</th>
+                        <th class="px-6 py-4">Status Risiko</th>
+                        <th class="px-6 py-4">Kader / Petugas</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-700/50">
+                <tbody class="divide-y divide-slate-100">
                     {% for row in riwayat %}
-                    <tr class="hover:bg-slate-800/30 transition">
-                        <td class="px-6 py-4 text-slate-300">{{ row.tanggal_periksa }}</td>
-                        <td class="px-6 py-4 font-medium text-white">{{ row.nama_anak }}</td>
-                        <td class="px-6 py-4 text-slate-300">{{ row.usia_bulan }}</td>
-                        <td class="px-6 py-4 text-slate-300">{{ row.tinggi_cm }} cm | {{ row.berat_kg }} kg</td>
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="px-6 py-4 text-slate-600">{{ row.tanggal_periksa }}</td>
+                        <td class="px-6 py-4 font-bold text-slate-800">{{ row.nama_anak }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ row.usia_bulan }}</td>
+                        <td class="px-6 py-4 text-slate-600 font-medium">{{ row.tinggi_cm }} cm | {{ row.berat_kg }} kg</td>
                         <td class="px-6 py-4">
                             {% if 'TINGGI' in row.label_risiko %}
-                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/20">{{ row.label_risiko }}</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">{{ row.label_risiko }}</span>
                             {% elif 'SEDANG' in row.label_risiko %}
-                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/20">{{ row.label_risiko }}</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">{{ row.label_risiko }}</span>
                             {% else %}
-                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">{{ row.label_risiko }}</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">{{ row.label_risiko }}</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-slate-400">{{ row.nama_petugas }}</td>
+                        <td class="px-6 py-4 text-slate-500 font-medium">{{ row.nama_petugas }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-slate-500">Belum ada riwayat pemeriksaan.</td>
+                        <td colspan="6" class="px-6 py-8 text-center text-slate-500 font-medium">Belum ada riwayat pemeriksaan.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
