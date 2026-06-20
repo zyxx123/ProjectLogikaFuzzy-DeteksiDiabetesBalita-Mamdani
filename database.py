@@ -106,6 +106,19 @@ def verifikasi_login(username, password):
     conn.close()
     return user
 
+def tambah_pengguna(username, password, role='pengguna'):
+    conn = buat_koneksi()
+    if not conn: return False
+    try:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)", (username, password, role))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+    except mysql.connector.Error as err:
+        return False
+
 # --- FUNGSI PASIEN ---
 def tambah_pasien(nama, jk, tgl_lahir, nama_ortu):
     conn = buat_koneksi()

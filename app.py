@@ -39,19 +39,34 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = verifikasi_login(username, password)
         
+        user = verifikasi_login(username, password)
         if user:
             session['logged_in'] = True
-            session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
-            flash('Berhasil login!', 'success')
+            session['user_id'] = user['id']
             return redirect(url_for('dashboard'))
         else:
             flash('Username atau password salah!', 'error')
             
     return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        # Coba tambah pengguna (role default: pengguna)
+        berhasil = tambah_pengguna(username, password)
+        if berhasil:
+            flash('Registrasi berhasil! Silakan login menggunakan akun baru Anda.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Username sudah digunakan atau terjadi kesalahan.', 'error')
+            
+    return render_template('register.html')
 
 @app.route('/logout')
 def logout():
@@ -65,17 +80,29 @@ def dashboard():
         return redirect(url_for('login'))
         
     if session.get('role') == 'admin':
+        # Admin Dashboard: Hanya statistik (tanpa tabel langsung)
         riwayat = dapatkan_semua_riwayat()
         stats = {
-            'total': len(riwayat),
-            'tinggi': sum(1 for r in riwayat if 'TINGGI' in r['label_risiko']),
-            'rendah': sum(1 for r in riwayat if 'RENDAH' in r['label_risiko'])
+            "total": len(riwayat),
+            "tinggi": sum(1 for r in riwayat if 'TINGGI' in r['label_risiko']),
+            "rendah": sum(1 for r in riwayat if 'RENDAH' in r['label_risiko'] or 'NORMAL' in r['label_risiko'])
         }
-        return render_template('admin.html', riwayat=riwayat, stats=stats)
+        return render_template('admin.html', stats=stats)
     else:
-        # Kader Dashboard: Hanya lihat riwayat pasien yang mereka deteksi sendiri
-        riwayat = dapatkan_riwayat_berdasarkan_pengguna(session['user_id'])
-        return render_template('kader.html', riwayat=riwayat)
+        # Kader Dashboard: Hanya menu (tanpa tabel langsung)
+        return render_template('kader.html')
+
+@app.route('/riwayat')
+def riwayat():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    if session.get('role') == 'admin':
+        data_riwayat = dapatkan_semua_riwayat()
+    else:
+        data_riwayat = dapatkan_riwayat_berdasarkan_pengguna(session['user_id'])
+        
+    return render_template('riwayat.html', riwayat=data_riwayat)
 
 @app.route('/tambah_pasien', methods=['POST'])
 def tambah_pasien_route():

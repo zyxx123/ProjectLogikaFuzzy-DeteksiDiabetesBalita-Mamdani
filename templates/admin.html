@@ -25,49 +25,12 @@
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="glass-card rounded-2xl overflow-hidden mt-8 shadow-sm">
-        <div class="px-6 py-5 border-b border-slate-200 bg-white/50">
-            <h3 class="text-lg font-bold text-slate-800">Riwayat Seluruh Pemeriksaan</h3>
-        </div>
-        <div class="overflow-x-auto bg-white/40">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
-                    <tr>
-                        <th class="px-6 py-4">Tanggal</th>
-                        <th class="px-6 py-4">Nama Anak</th>
-                        <th class="px-6 py-4">Usia (Bln)</th>
-                        <th class="px-6 py-4">Pengukuran</th>
-                        <th class="px-6 py-4">Status Risiko</th>
-                        <th class="px-6 py-4">Kader / Petugas</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    {% for row in riwayat %}
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="px-6 py-4 text-slate-600">{{ row.tanggal_periksa }}</td>
-                        <td class="px-6 py-4 font-bold text-slate-800">{{ row.nama_anak }}</td>
-                        <td class="px-6 py-4 text-slate-600">{{ row.usia_bulan }}</td>
-                        <td class="px-6 py-4 text-slate-600 font-medium">{{ row.tinggi_cm }} cm | {{ row.berat_kg }} kg</td>
-                        <td class="px-6 py-4">
-                            {% if 'TINGGI' in row.label_risiko %}
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">{{ row.label_risiko }}</span>
-                            {% elif 'SEDANG' in row.label_risiko %}
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">{{ row.label_risiko }}</span>
-                            {% else %}
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">{{ row.label_risiko }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-slate-500 font-medium">{{ row.nama_petugas }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-slate-500 font-medium">Belum ada riwayat pemeriksaan.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <!-- Link ke Halaman Riwayat -->
+    <div class="text-center mt-8">
+        <a href="{{ url_for('riwayat') }}" class="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-medical-blue text-medical-dark font-bold rounded-2xl hover:bg-medical-blue hover:text-white transition shadow-sm hover:shadow-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            Lihat Tabel Riwayat Seluruh Pemeriksaan
+        </a>
     </div>
 </div>
 {% endblock %}
