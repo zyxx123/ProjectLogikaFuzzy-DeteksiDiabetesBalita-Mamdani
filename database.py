@@ -156,6 +156,22 @@ def dapatkan_semua_riwayat():
     conn.close()
     return data
 
+def dapatkan_riwayat_berdasarkan_pengguna(id_pengguna):
+    conn = buat_koneksi()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('''
+        SELECT r.*, p.nama_anak, p.jenis_kelamin, u.username as nama_petugas
+        FROM riwayat_deteksi r
+        JOIN pasien p ON r.id_pasien = p.id
+        JOIN users u ON r.id_pengguna = u.id
+        WHERE r.id_pengguna = %s
+        ORDER BY r.tanggal_periksa DESC, r.id DESC
+    ''', (id_pengguna,))
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return data
+
 def dapatkan_riwayat_pasien(id_pasien):
     conn = buat_koneksi()
     cursor = conn.cursor(dictionary=True)

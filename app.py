@@ -73,8 +73,8 @@ def dashboard():
         }
         return render_template('admin.html', riwayat=riwayat, stats=stats)
     else:
-        # Kader Dashboard
-        riwayat = dapatkan_semua_riwayat()
+        # Kader Dashboard: Hanya lihat riwayat pasien yang mereka deteksi sendiri
+        riwayat = dapatkan_riwayat_berdasarkan_pengguna(session['user_id'])
         return render_template('kader.html', riwayat=riwayat)
 
 @app.route('/tambah_pasien', methods=['POST'])
