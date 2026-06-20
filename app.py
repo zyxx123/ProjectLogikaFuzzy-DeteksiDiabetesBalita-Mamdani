@@ -106,7 +106,7 @@ def riwayat():
 
 @app.route('/tambah_pasien', methods=['POST'])
 def tambah_pasien_route():
-    if not session.get('logged_in') or session.get('role') != 'pengguna':
+    if not session.get('logged_in'):
         return redirect(url_for('login'))
         
     nama = request.form['nama']
@@ -114,7 +114,7 @@ def tambah_pasien_route():
     tgl_lahir = request.form['tgl_lahir']
     nama_ortu = request.form['nama_ortu']
     
-    tambah_pasien(nama, jk, tgl_lahir, nama_ortu)
+    tambah_pasien(nama, jk, tgl_lahir, nama_ortu, session['user_id'])
     flash(f"Pasien {nama} berhasil didaftarkan!", "success")
     return redirect(url_for('dashboard'))
 
@@ -123,7 +123,10 @@ def deteksi():
     if not session.get('logged_in') or session.get('role') != 'pengguna':
         return redirect(url_for('login'))
         
-    pasien_list = dapatkan_semua_pasien()
+    if session.get('role') == 'admin':
+        pasien_list = dapatkan_semua_pasien()
+    else:
+        pasien_list = dapatkan_pasien_berdasarkan_pengguna(session['user_id'])
     
     if request.method == 'GET':
         return render_template('deteksi.html', pasien=pasien_list, hasil=None)

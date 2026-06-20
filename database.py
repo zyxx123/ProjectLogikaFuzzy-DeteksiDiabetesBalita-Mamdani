@@ -63,7 +63,9 @@ def inisialisasi_database():
             nama_anak VARCHAR(100) NOT NULL,
             jenis_kelamin ENUM('Laki-laki', 'Perempuan') NOT NULL,
             tanggal_lahir DATE NOT NULL,
-            nama_orang_tua VARCHAR(100) NOT NULL
+            nama_orang_tua VARCHAR(100) NOT NULL,
+            id_pengguna INT DEFAULT 1,
+            FOREIGN KEY (id_pengguna) REFERENCES users(id)
         )
     ''')
     
@@ -120,13 +122,13 @@ def tambah_pengguna(username, password, role='pengguna'):
         return False
 
 # --- FUNGSI PASIEN ---
-def tambah_pasien(nama, jk, tgl_lahir, nama_ortu):
+def tambah_pasien(nama, jk, tgl_lahir, nama_ortu, id_pengguna):
     conn = buat_koneksi()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO pasien (nama_anak, jenis_kelamin, tanggal_lahir, nama_orang_tua)
-        VALUES (%s, %s, %s, %s)
-    ''', (nama, jk, tgl_lahir, nama_ortu))
+        INSERT INTO pasien (nama_anak, jenis_kelamin, tanggal_lahir, nama_orang_tua, id_pengguna)
+        VALUES (%s, %s, %s, %s, %s)
+    ''', (nama, jk, tgl_lahir, nama_ortu, id_pengguna))
     conn.commit()
     cursor.close()
     conn.close()
@@ -135,6 +137,15 @@ def dapatkan_semua_pasien():
     conn = buat_koneksi()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM pasien ORDER BY id DESC")
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return data
+
+def dapatkan_pasien_berdasarkan_pengguna(id_pengguna):
+    conn = buat_koneksi()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM pasien WHERE id_pengguna = %s ORDER BY id DESC", (id_pengguna,))
     data = cursor.fetchall()
     cursor.close()
     conn.close()
