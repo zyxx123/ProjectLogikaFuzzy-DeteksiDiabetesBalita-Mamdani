@@ -42,9 +42,15 @@
             </div>
         </div>
 
-        <button type="submit" {% if not pasien %}disabled{% endif %} class="w-full py-3.5 px-4 mt-2 rounded-xl text-white font-bold text-lg bg-gradient-to-r from-medical-dark to-medical-blue hover:from-medical-blue hover:to-sky-400 shadow-xl shadow-medical-blue/30 transform transition hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed">
+        {% if not pasien %}
+        <button type="button" disabled class="w-full py-3.5 px-4 mt-2 rounded-xl text-white font-bold text-lg bg-gradient-to-r from-medical-dark to-medical-blue opacity-50 cursor-not-allowed shadow-none">
             Analisis Risiko Mamdani
         </button>
+        {% else %}
+        <button type="submit" class="w-full py-3.5 px-4 mt-2 rounded-xl text-white font-bold text-lg bg-gradient-to-r from-medical-dark to-medical-blue hover:from-medical-blue hover:to-sky-400 shadow-xl shadow-medical-blue/30 transform transition hover:-translate-y-1">
+            Analisis Risiko Mamdani
+        </button>
+        {% endif %}
     </form>
 </div>
 
