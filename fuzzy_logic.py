@@ -87,38 +87,72 @@ ATURAN_FUZZY = [
 # BAGIAN 4: INFERENSI MAMDANI & DEFUZZIFIKASI
 # -------------------------------------------------------------------
 def proses_inferensi_mamdani(derajat_tinggi, derajat_berat):
+    # 1. Menyiapkan kamus/tempat untuk menyimpan nilai agregasi (gabungan) tertinggi dari setiap label risiko. Awalnya diatur 0.
     maksimum_agregasi = {"Rendah": 0.0, "Sedang": 0.0, "Tinggi": 0.0, "Sangat Tinggi": 0.0}
+    # 2. Membuat daftar kosong untuk menyimpan jejak atau riwayat aturan mana saja yang terpanggil (aktif)
     aturan_aktif = []
     
+    # 3. Looping (perulangan) untuk mengevaluasi semua 16 Aturan Pakar (JIKA ... DAN ... MAKA ...) satu per satu
     for i, (kategori_tinggi, kategori_berat, label_risiko) in enumerate(ATURAN_FUZZY):
+        # 4. Menerapkan operasi logika AND (irisan). Dalam Fuzzy Mamdani, operator AND berarti mengambil nilai yang paling KECIL (min) dari dua parameter input.
         nilai_minimum_alpha = min(derajat_tinggi[kategori_tinggi], derajat_berat[kategori_berat])
+        
+        # 5. Mencatat riwayat evaluasi setiap aturan ke dalam daftar (untuk ditampilkan di bagian "Detail Perhitungan" pada website)
         aturan_aktif.append({
             "kategori_tinggi": kategori_tinggi, 
             "kategori_berat": kategori_berat, 
             "label_risiko": label_risiko, 
             "nilai_alpha": nilai_minimum_alpha, 
-            "aktif": nilai_minimum_alpha > 0.001
+            "aktif": nilai_minimum_alpha > 0.001 # 6. Suatu aturan dianggap "menyala" (aktif) jika nilai keanggotaannya lebih besar dari 0
         })
         
+        # 7. Tahap Agregasi (Penggabungan Aturan dengan operator Maksimum): 
+        # Jika ada beberapa aturan yang menghasilkan label risiko yang SAMA (misal ada 3 aturan yang bilang "Sedang"),
+        # maka kita hanya akan mengambil nilai simpulan (alpha) yang paling BESAR (maksimum) di antara ketiganya.
         if nilai_minimum_alpha > maksimum_agregasi[label_risiko]:
             maksimum_agregasi[label_risiko] = nilai_minimum_alpha
             
+    # 8. Tahap Defuzzifikasi menggunakan metode Centroid (Mencari Titik Berat)
+    # Menyiapkan variabel untuk menjumlahkan hasil perkalian (skor * luas area) sebagai 'pembilang' rumus Centroid
     pembilang_centroid = 0.0
+    # Menyiapkan variabel untuk menjumlahkan total luas area sebagai 'penyebut' rumus Centroid
     penyebut_centroid = 0.0
+    
+    # 9. Karena rumus Centroid sebenarnya adalah Integral (kalkulus), kita menghitungnya dengan memotong-motong area (pendekatan diskrit).
+    # Disini kita membuat 500 titik potong/sampel secara merata dari skor 0 hingga 100 untuk sumbu mendatar (Sumbu X)
     titik_skor_x = np.linspace(0, 100, 500)
+    # Tempat penampungan hasil perhitungan bentuk kurva akhir untuk keperluan menggambar grafik
     derajat_potongan_kurva = []
     
+    # 10. Melakukan perulangan perhitungan pada ke-500 titik potongan (dari skor 0 sampai 100)
     for skor_x in titik_skor_x:
+        # a. Mengecek nilai/ketinggian kurva trapesium asli (Risiko Rendah, Sedang, Tinggi) pada titik X saat ini
         kurva_output = fuzzifikasi_risiko(skor_x)
+        # b. Variabel untuk mencatat titik tertinggi kurva gabungan pada titik X ini
         nilai_agregasi_tertinggi = 0.0
+        
+        # c. Memproses gabungan keempat kurva (Rendah, Sedang, Tinggi, Sangat Tinggi) menjadi satu kurva agregasi
         for risiko_label in ["Rendah", "Sedang", "Tinggi", "Sangat Tinggi"]:
+            # d. Operasi Implikasi Mamdani: Memotong ("clipping") bagian atap kurva trapesium.
+            # Bentuk keluaran dipotong secara horizontal sehingga tingginya tidak melebihi nilai maksimal dari aturan yang aktif (maksimum_agregasi).
             nilai_terpotong = min(maksimum_agregasi[risiko_label], kurva_output[risiko_label])
+            
+            # e. Operasi Komposisi Aturan: Menumpuk seluruh kurva terpotong tadi menjadi sebuah himpunan area tunggal yang luas.
+            # Menggunakan batasan luar/tertinggi (operator UNION/Maksimum).
             if nilai_terpotong > nilai_agregasi_tertinggi:
                 nilai_agregasi_tertinggi = nilai_terpotong
                 
+        # 11. Memasukkan perhitungan area pada titik ini ke dalam rumus sigma Defuzzifikasi Centroid:
+        # Menambahkan (titik Sumbu X) * (ketinggian Area Y) ke dalam total pembilang
         pembilang_centroid += skor_x * nilai_agregasi_tertinggi
+        # Menambahkan ketinggian Area Y ke dalam total penyebut
         penyebut_centroid += nilai_agregasi_tertinggi
+        # 12. Menyimpan rekam jejak ketinggian area Y agar bisa divisualisasikan menjadi diagram di website
         derajat_potongan_kurva.append(nilai_agregasi_tertinggi)
         
+    # 13. Rumus akhir Centroid: membagi total momen area dengan total pembobot luasan area (Z* = Σx·µ(x) / Σµ(x))
+    # Jika penyebut > 0 (berarti bentuk areanya ada), lakukan pembagian. Jika 0 (tidak ada aturan aktif), beri skor 0.
     skor_akhir = pembilang_centroid / penyebut_centroid if penyebut_centroid > 0 else 0.0
+    
+    # 14. Mengirimkan seluruh hasil perhitungan akhir ke fungsi utama untuk ditampilkan
     return skor_akhir, aturan_aktif, titik_skor_x, derajat_potongan_kurva, maksimum_agregasi
