@@ -126,8 +126,11 @@
         <div id="vis" class="w-full flex justify-center bg-white/80 p-2 sm:p-4 rounded-xl overflow-hidden border border-slate-200 shadow-inner"></div>
         
         <!-- Script to inject Vega-Lite chart -->
+        <script id="chart-data" type="application/json">
+            {{ chart_json | safe }}
+        </script>
         <script>
-            var spec = {{ chart_json | safe }};
+            var spec = JSON.parse(document.getElementById('chart-data').textContent);
             vegaEmbed('#vis', spec, {actions: false}).catch(console.error);
         </script>
     </div>
@@ -156,9 +159,11 @@
                             <span class="text-indigo-600 font-bold">MAKA</span> Risiko <b class="text-slate-900">{{ r.label_risiko }}</b> 
                             <span class="text-slate-500 ml-2">(Nilai Alpha: <span class="font-bold text-indigo-600">{{ "%.3f"|format(r.nilai_alpha) }}</span>)</span>
                         </li>
-                        {% else %}
-                        <li class="text-sm text-slate-500">Tidak ada aturan yang aktif.</li>
                         {% endfor %}
+                        
+                        {% if not hasil.aturan_aktif %}
+                        <li class="text-sm text-slate-500">Tidak ada aturan yang aktif.</li>
+                        {% endif %}
                     </ul>
                 </div>
                 
