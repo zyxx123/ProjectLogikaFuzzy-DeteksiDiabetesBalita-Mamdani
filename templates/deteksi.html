@@ -95,7 +95,8 @@
                 {% else %}
                     {% set bar_color = 'bg-gradient-to-r from-emerald-400 to-emerald-500' %}
                 {% endif %}
-                <div class="{{ bar_color }} h-3 rounded-full transition-all duration-1000 ease-out" style="width: {{ hasil.skor }}%"></div>
+                {% set bar_style_attr = 'style="width: ' ~ hasil.skor ~ '%;"' %}
+                <div class="{{ bar_color }} h-3 rounded-full transition-all duration-1000 ease-out" {{ bar_style_attr | safe }}></div>
             </div>
         </div>
         
