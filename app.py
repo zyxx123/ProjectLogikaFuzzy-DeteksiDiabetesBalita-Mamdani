@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import pandas as pd
 import altair as alt
 import json
-from database import *
+from database.database import *
 from fuzzy_logic import *
 
 app = Flask(__name__)
