@@ -151,9 +151,12 @@ def deteksi():
         derajat_tinggi = fuzzifikasi_tinggi_badan(persentase_tinggi)
         derajat_berat = fuzzifikasi_berat_badan(persentase_berat)
         
-        skor_akhir, _, kordinat_x, kordinat_y, _ = proses_inferensi_mamdani(derajat_tinggi, derajat_berat)
+        skor_akhir, histori_aturan, kordinat_x, kordinat_y, agregasi = proses_inferensi_mamdani(derajat_tinggi, derajat_berat)
         label_risiko_full = gaya_tampilan_risiko(skor_akhir)
         label_bersih = label_risiko_full.split("Risiko ")[-1]
+        
+        # Filter aturan yang aktif saja
+        aturan_aktif = [r for r in histori_aturan if r['aktif']]
         
         # Simpan riwayat
         simpan_riwayat(id_pasien, usia, tinggi, berat, skor_akhir, label_bersih, session['user_id'])
@@ -187,7 +190,9 @@ def deteksi():
             "berat": berat,
             "skor": skor_akhir,
             "label": label_risiko_full,
-            "rekomendasi": rekomendasi_list
+            "rekomendasi": rekomendasi_list,
+            "aturan_aktif": aturan_aktif,
+            "agregasi": agregasi
         }
         
         flash("Analisis selesai dan riwayat telah disimpan.", "success")
