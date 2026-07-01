@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="space-y-6 animate-fade-in-up">
+    <div class="flex justify-between items-end">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800">Dashboard Kader</h1>
+            <p class="text-slate-500 mt-1 font-medium">Visualisasi dan Pemantauan Risiko Stunting Pasien Anda</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Chart Area -->
+        <div class="md:col-span-2 glass-card p-6 rounded-2xl shadow-sm hover:shadow-lg transition">
+            <h3 class="text-slate-800 font-bold mb-4 text-xl">Distribusi Risiko Pasien</h3>
+            <div class="relative h-64 w-full flex items-center justify-center">
+                {% if stats.total > 0 %}
+                <canvas id="risikoChart"></canvas>
+                {% else %}
+                <p class="text-slate-400 font-medium text-center">Belum ada data pemeriksaan pasien.<br>Silakan lakukan pemeriksaan (deteksi) terlebih dahulu.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mini Stats -->
+        <div class="space-y-6 flex flex-col justify-center">
+            <div class="glass-card p-6 rounded-2xl border-l-4 border-l-indigo-500 hover:shadow-lg transition flex-1 flex flex-col justify-center">
+                <h3 class="text-slate-500 font-semibold mb-1 text-sm">Total Pasien Terdaftar</h3>
+                <p class="text-4xl font-black text-slate-800">{{ stats.total_pasien }} <span class="text-lg font-normal text-slate-500">Anak</span></p>
+            </div>
+            <div class="glass-card p-6 rounded-2xl border-l-4 border-l-medical-blue hover:shadow-lg transition flex-1 flex flex-col justify-center">
+                <h3 class="text-slate-500 font-semibold mb-1 text-sm">Total Riwayat Pemeriksaan</h3>
+                <p class="text-4xl font-black text-slate-800">{{ stats.total }} <span class="text-lg font-normal text-slate-500">Kali</span></p>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+{% if stats.total > 0 %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('risikoChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Berisiko Tinggi', 'Risiko Sedang', 'Normal / Rendah'],
+                datasets: [{
+                    data: [{{ stats.tinggi }}, {{ stats.sedang }}, {{ stats.rendah }}],
+                    backgroundColor: [
+                        '#f43f5e', // rose-500
+                        '#f59e0b', // amber-500
+                        '#10b981'  // emerald-500
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: {
+                                family: "'Outfit', sans-serif",
+                                size: 14
+                            },
+                            color: '#475569'
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

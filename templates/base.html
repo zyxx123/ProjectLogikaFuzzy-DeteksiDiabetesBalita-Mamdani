@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuzzy - Risiko Stunting</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        medical: {
+                            light: '#e0f2fe', // sky-100
+                            blue: '#0ea5e9', // sky-500
+                            dark: '#0369a1', // sky-700
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+    </style>
+    <!-- Vega-Lite Scripts for Altair Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex relative overflow-x-hidden">
+
+    <!-- Subtle Background Elements -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-medical-light rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+        <div class="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
+    </div>
+
+    {% if session.get('logged_in') %}
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-800 text-slate-300 flex flex-col h-screen overflow-y-auto shadow-2xl z-20 sticky top-0">
+        <!-- Logo Area -->
+        <div class="h-16 flex items-center justify-center bg-medical-blue text-white shadow-md">
+            <a href="{{ url_for('dashboard') }}" class="flex items-center space-x-3 hover:opacity-80 transition group">
+                <div class="w-8 h-8 rounded-full bg-white text-medical-blue flex items-center justify-center font-bold shadow-md">FS</div>
+                <span class="font-bold text-xl tracking-tight">Fuzzy Stunting</span>
+            </a>
+        </div>
+        
+        <!-- Menu Items -->
+        <nav class="flex-grow flex flex-col mt-6 px-4 space-y-2">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-2">Menu Utama</div>
+            
+            <a href="{{ url_for('dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.endpoint == 'dashboard' %}bg-medical-blue text-white shadow-lg font-bold{% else %}hover:bg-slate-700 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Dashboard
+            </a>
+            
+            <a href="{{ url_for('data_pasien') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.endpoint in ['data_pasien', 'edit_pasien_route'] %}bg-medical-blue text-white shadow-lg font-bold{% else %}hover:bg-slate-700 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                Data Pasien
+            </a>
+
+            <a href="{{ url_for('tambah_pasien_route') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.endpoint == 'tambah_pasien_route' %}bg-medical-blue text-white shadow-lg font-bold{% else %}hover:bg-slate-700 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                Pendaftaran Pasien
+            </a>
+
+            {% if session.get('role') == 'pengguna' %}
+            <a href="{{ url_for('deteksi') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.endpoint == 'deteksi' %}bg-medical-blue text-white shadow-lg font-bold{% else %}hover:bg-slate-700 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                Deteksi Stunting
+            </a>
+            {% endif %}
+
+            <a href="{{ url_for('riwayat') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.endpoint == 'riwayat' %}bg-medical-blue text-white shadow-lg font-bold{% else %}hover:bg-slate-700 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Data Riwayat
+            </a>
+            
+            {% if session.get('role') == 'admin' %}
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-2 pt-4">Admin Area</div>
+            <a href="{{ url_for('data_user') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition {% if request.endpoint in ['data_user', 'edit_user_route'] %}bg-medical-blue text-white shadow-lg font-bold{% else %}hover:bg-slate-700 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Data Pengguna
+            </a>
+            {% endif %}
+        </nav>
+        
+        <div class="p-4 border-t border-slate-700">
+            <a href="{{ url_for('logout') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition font-bold shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Logout Sistem
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Layout (Logged In) -->
+    <div class="flex-grow flex flex-col min-h-screen">
+        <!-- Top Header -->
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-8 z-10 sticky top-0">
+            <div class="text-slate-500 font-bold tracking-wide">
+                SPK Deteksi Stunting (Logika Fuzzy)
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex flex-col items-end">
+                    <span class="text-sm font-bold text-slate-800">{{ session.get('username') }}</span>
+                    <span class="text-xs font-semibold text-slate-400 uppercase">{{ session.get('role') }}</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-medical-light text-medical-dark flex items-center justify-center font-black border-2 border-medical-blue/20">
+                    {{ session.get('username')[0]|upper if session.get('username') else '?' }}
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8 flex-grow flex flex-col">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="w-full max-w-6xl mx-auto mb-6">
+                {% for category, message in messages %}
+                  {% set bg_color = 'bg-emerald-100 border-emerald-200 text-emerald-800' if category == 'success' else 'bg-red-100 border-red-200 text-red-800' %}
+                  <div class="p-4 mb-2 rounded-xl border {{ bg_color }} shadow-sm font-medium">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            <main class="w-full max-w-6xl mx-auto flex-grow">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+        
+        <footer class="py-6 mt-auto">
+            <div class="text-center text-sm text-slate-400">
+                &copy; 2026 Sistem Deteksi Dini Stunting Balita - Algoritma Fuzzy Mamdani Murni
+            </div>
+        </footer>
+    </div>
+
+    {% else %}
+    <!-- Layout Tamu (Guest/Belum Login) -->
+    <div class="w-full flex flex-col min-h-screen items-center justify-center py-12">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="w-full max-w-md mx-auto mb-4 px-4">
+            {% for category, message in messages %}
+              {% set bg_color = 'bg-emerald-100 border-emerald-200 text-emerald-800' if category == 'success' else 'bg-red-100 border-red-200 text-red-800' %}
+              <div class="p-4 rounded-xl border {{ bg_color }} shadow-sm font-medium">
+                {{ message }}
+              </div>
+            {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        
+        <main class="w-full max-w-md mx-auto px-4">
+            {% block guest_content %}
+            {% endblock %}
+            
+            {% if not self.guest_content()|trim %}
+                {{ self.content() }}
+            {% endif %}
+        </main>
+    </div>
+    {% endif %}
+
+</body>
+</html>
